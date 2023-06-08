@@ -178,8 +178,9 @@ impl<'a> Downloader<'a> {
                     } else {
                         true
                     };
+                    let mut is_success = true;
 
-                    if is_valid {
+                    if is_valid {    
                         debug!("Subreddit VALID: {} present in {:#?}", subreddit, subreddit);
 
                         let supported_media_items = get_media(item.data.borrow()).await?;
@@ -231,6 +232,7 @@ impl<'a> Downloader<'a> {
                                         MediaStatus::Skipped => {
                                             local_skipped += 1;
                                             summary_arc.lock().unwrap().media_skipped += 1;
+                                            is_success = false;
                                         }
                                     }
                                 } else {
@@ -304,13 +306,16 @@ impl<'a> Downloader<'a> {
                                             warn!("Could not combine video {} and audio {}. Saving log to: {}", 
                                                 media_urls.first().unwrap(), media_urls.last().unwrap(), log_file_name);
                                             fs::write(log_file_name, err)?;
+                                            is_success = false;
                                         }
                                     }
                                 } else {
                                     warn!("Skipping combining the individual components since ffmpeg is not installed");
+                                    is_success = false;
                                 }
                             } else {
                                 debug!("Skipping combining reddit video.");
+                                is_success = false;
                             }
                         }
                     } else {
@@ -318,9 +323,10 @@ impl<'a> Downloader<'a> {
                             "Subreddit INVALID!: {} NOT present in {:#?}",
                             subreddit, self.subreddits
                         );
+                        is_success = false;
                     }
 
-                    if self.undo {
+                    if self.undo && is_success {
                         self.user.undo(post_name, listing_type).await?;
                     }
 
@@ -446,6 +452,7 @@ async fn download_media(file_name: &str, url: &str) -> Result<bool, ReddSaverErr
                 }
                 Err(_) => {
                     warn!("Could not create a file with the name: {}. Skipping", file_name);
+                    return Err(ReddSaverError::CouldNotSaveImageError(file_name.to_string()));
                 }
             }
         }
