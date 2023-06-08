@@ -232,7 +232,6 @@ impl<'a> Downloader<'a> {
                                         MediaStatus::Skipped => {
                                             local_skipped += 1;
                                             summary_arc.lock().unwrap().media_skipped += 1;
-                                            is_success = false;
                                         }
                                     }
                                 } else {
@@ -314,8 +313,7 @@ impl<'a> Downloader<'a> {
                                     is_success = false;
                                 }
                             } else {
-                                debug!("Skipping combining reddit video.");
-                                is_success = false;
+                                warn!("Skipping combining reddit video.");
                             }
                         }
                     } else {
@@ -384,6 +382,7 @@ impl<'a> Downloader<'a> {
                         || c == '\\'
                         || c == ':'
                         || c == '='
+                        || c == '?'
                     {
                         '_'
                     } else {
@@ -407,7 +406,7 @@ impl<'a> Downloader<'a> {
 /// Helper function that downloads and saves a single media from Reddit or Imgur
 async fn save_or_skip(url: &str, file_name: &str) -> Result<MediaStatus, ReddSaverError> {
     if check_path_present(&file_name) {
-        debug!("Media from url {} already downloaded. Skipping...", url);
+        info!("Media from url {} already downloaded. Skipping...", url);
         Ok(MediaStatus::Skipped)
     } else {
         let save_status = download_media(&file_name, &url).await?;
@@ -447,6 +446,7 @@ async fn download_media(file_name: &str, url: &str) -> Result<bool, ReddSaverErr
                         }
                         Err(_e) => {
                             error!("Could not save media from url {} to {}", url, file_name);
+                            return Err(ReddSaverError::CouldNotSaveImageError(file_name.to_string()));
                         }
                     }
                 }
