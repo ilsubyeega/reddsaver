@@ -210,7 +210,7 @@ impl<'a> Downloader<'a> {
                                 if (media_type == MediaType::RedditVideoWithoutAudio
                                     || media_type == MediaType::RedditVideoWithAudio)
                                     && !extension.ends_with(".mp4") {
-                                    extension = format!("{}.{}", extension, ".mp4");
+                                    extension = format!("{}.{}", extension, "mp4");
                                 }
                                 let file_name = self.generate_file_name(
                                     &url,
