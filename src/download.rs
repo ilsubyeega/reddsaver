@@ -70,6 +70,7 @@ enum MediaType {
     ImgurGif,
 }
 
+#[derive(Debug)]
 /// Information about supported media for downloading
 struct SupportedMedia {
     /// The components for the media. This is a vector of size one for
@@ -484,7 +485,7 @@ async fn gfy_to_mp4(url: &str) -> Result<Option<SupportedMedia>, ReddSaverError>
         // response was HTTP 200
         if response.status() == StatusCode::OK {
             let data = response.json::<GfyData>().await?;
-            let supported_media = SupportedMedia {
+            let supported_media: SupportedMedia = SupportedMedia {
                 components: vec![data.gfy_item.mp4_url],
                 media_type: MediaType::GfycatGif,
             };
@@ -514,7 +515,8 @@ async fn get_reddit_video(url: &str) -> Result<Option<SupportedMedia>, ReddSaver
             } else {
                 let all = url.split("/").collect::<Vec<&str>>();
                 let mut result = all.split_last().unwrap().1.to_vec();
-                let dash_audio = "DASH_audio.mp4";
+                let dash_audio = "DASH_AUDIO_128.mp4"; 
+				// TODO: Need to fix this since it may be not 128. Further fix would be reqeusting `DASHPlaylist.mpd` and finding out which audio is the best.
                 result.push(dash_audio);
 
                 // dynamically generate audio URLs for reddit videos by changing the video URL
